@@ -1,0 +1,2 @@
+V1 - V5 is only 'bathy' input
+V6 - V7 is 'bathy' input and 'eta', 'zeta', 'theta_{wave}'
