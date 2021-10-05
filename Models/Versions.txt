@@ -3,4 +3,4 @@ V6 - V7 is 'bathy' input and 'eta', 'zeta', 'theta_{wave}'
 
 V6 - standardized input and output, lr = 1e-4, batch_size = 8, 1 branch
 V7 - standardized input and output, lr = 1e-4, batch_size = 8, 3 branches
-V8 - standardized input, scaled output to [0,1], lr = 1e-4, batch_size = 32, 3 branches
+V8 - standardized input, scaled output to [0,1], lr = 1e-2 + step decay, batch_size = 32, 3 branches
