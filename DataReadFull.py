@@ -146,7 +146,7 @@ DFschema = DFschema.assign(hs = c.values(), tm01 = d.values())
 
 # Adjusting 'bathy' arrays to align with 'hs' arrays
 for i in DFschema.index:
-    DFschema['bathy'][i] = -DFschema['bathy'][i].T                
+    DFschema['bathy'][i] = DFschema['bathy'][i].T                
 
 # Dropping columns without useful information for training and saving
 DFschema = DFschema.drop(['bathy_file','run_id','uuid','bathy_source'],axis=1)
