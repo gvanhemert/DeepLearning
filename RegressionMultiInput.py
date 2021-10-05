@@ -30,46 +30,71 @@ def create_input(df, input_labels):
 
 def create_mlp(dim):
     model = Sequential()
-    #model.add(Dense(16, input_dim=dim, activation="relu"))
     model.add(Dense(64, input_dim=dim, activation='relu'))
-    #model.add(Dense(256, activation='relu'))
     model.add(Dense(1024, activation='relu'))
-    #model.add(Dense(4096, activation='relu'))
-    #model.add(Dense(16384, activation='relu'))
     model.add(Dense(256*256, activation='relu'))
     model.build((None, 256*256))
 
     return model
 
-def create_cnn(width, height, depth, filters=(16, 32, 64), regress=False):
+def create_cnn(width, height, depth):
     inputShape = (height, width, depth)
-    chanDim = -1
     
+    #Main Branch
     inputs = Input(shape=inputShape)
     x = Conv2D(64, (3,3), padding="same")(inputs)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
+    ax = MaxPooling2D(pool_size=(2,2))(x)
+
+    #Branch 1
+    x = Conv2D(32, (3,3), padding="same")(ax)
+    x = Activation("relu")(x)
+    x = BatchNormalization()(x)
+    bx = MaxPooling2D(pool_size=(2,2))(x)
+
+    #Branch 2
+    x = Conv2D(32, (3,3), padding="same")(bx)
+    x = Activation("relu")(x)
+    x = BatchNormalization()(x)
     cx = MaxPooling2D(pool_size=(2,2))(x)
-    
-    x = Conv2D(64, (3,3), padding="same")(cx)
+
+    #Branch 3
+    x = Conv2D(32, (3,3), padding="same")(cx)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
     x = MaxPooling2D(pool_size=(2,2))(x)
-    
-    x = Conv2D(64, (3,3), padding="same")(x)
+    x = Conv2D(32, (3,3), padding="same")(x)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
     x = UpSampling2D(size=(2,2))(x)
-    x = Conv2DTranspose(16, (3,3), padding="same")(x)
+    x = Conv2DTranspose(32, (3,3), padding="same")(x)
+
+    #Branch 2
+    x = Concatenate()([x, cx])
+    x = Conv2D(32, (3,3), padding="same")(x)
+    x = Activation("relu")(x)
+    x = BatchNormalization()(x)
+    x = UpSampling2D(size=(2,2))(x)
+    x = Conv2DTranspose(32, (3,3), padding="same")(x)
+
+    #Branch 1
+    x = Concatenate()([x, bx])
+    x = Conv2D(32, (3,3), padding="same")(x)
+    x = Activation("relu")(x)
+    x = BatchNormalization()(x)
+    x = UpSampling2D(size=(2,2))(x)
+    x = Conv2DTranspose(32, (3,3), padding="same")(x)
     
-    x = Concatenate()([x,cx])
+    #Main Branch
+    x = Concatenate()([x,ax])
     x = Conv2D(16, (3,3), padding="same")(x)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
     
     model = Model(inputs, x)
     
-    return model 
+    return model
     
 def full_model(cnn_model, mlp_model):
     
