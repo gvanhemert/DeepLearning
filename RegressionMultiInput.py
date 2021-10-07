@@ -117,23 +117,23 @@ def full_model(cnn_model, mlp_model):
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
     
-    x = Conv2D(16, (3,3), padding="same")(x)
+    x = Conv2D(32, (3,3), padding="same")(x)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
     
-    x = Conv2D(16, (3,3), padding="same")(x)
+    x = Conv2D(64, (3,3), padding="same")(x)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
     
-    x = Conv2D(16, (3,3), padding="same")(x)
+    x = Conv2D(128, (3,3), padding="same")(x)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
     
-    x = Conv2D(16, (3,3), padding="same")(x)
+    x = Conv2D(128, (3,3), padding="same")(x)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
     
-    x = Conv2D(16, (3,3), padding="same")(x)
+    x = Conv2D(128, (3,3), padding="same")(x)
     x = Activation("relu")(x)
     x = BatchNormalization()(x)
 
@@ -142,7 +142,7 @@ def full_model(cnn_model, mlp_model):
     
     model = Model(inputs=[cnn_model.input, mlp_model.input], outputs = x)
     
-    return model   
+    return model
 
 
 df = load_dataset()
