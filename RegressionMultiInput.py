@@ -187,7 +187,7 @@ model.fit(x=[trainImgX, trainAttrX], y=trainY,
           epochs=200, batch_size=8)
           #callbacks=[LearningRateScheduler(lr_step_decay, verbose=1)])
 
-model.save('/content/drive/MyDrive/DeepLearning/ModelV6')
+model.save('/content/drive/MyDrive/DeepLearning/ModelV10')
 
 
 
