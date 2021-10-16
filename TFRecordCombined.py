@@ -152,7 +152,7 @@ def tf_parse(eg):
     zeta = example["zeta"]
     theta = example["theta"]
     attr = tf.stack([eta, zeta, theta], axis=1)
-    return bathy, attr, hs
+    return (bathy, attr), hs
 
 
 df = load_dataset()
