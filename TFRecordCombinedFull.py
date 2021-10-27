@@ -1,3 +1,4 @@
+#%% Imports
 import tqdm
 import glob
 import tensorflow as tf
@@ -7,66 +8,31 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
-source_path = "C:/Users/hemert/OneDrive - Stichting Deltares/Programmas/Data/"
-#https://console.cloud.google.com/storage/browser/_details/bathy_sample/processed/20211013/combined_data/100_102combined_data.tfrecords;tab=live_object?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&project=dgds-i1000482-002
+#%% Paths
+source_path = Path('C:/Users/hemert/OneDrive - Stichting Deltares/Programmas/Data/Analysis Results')
+source_path2 = Path('C:/Users/hemert/OneDrive - Stichting Deltares/Programmas/Data/')
 
-#%% Loading
-source_path2 = Path('C:/Users/hemert/OneDrive - Stichting Deltares/Programmas/Data/Analysis Results')
-
-DFEmoda = pd.read_pickle(source_path2.joinpath('DataEmoda.npy'))
-DFEmodb = pd.read_pickle(source_path2.joinpath('DataEmodb.npy'))
-DFEmodc = pd.read_pickle(source_path2.joinpath('DataEmodc.npy'))
-DFEmodd = pd.read_pickle(source_path2.joinpath('DataEmodd.npy'))
-DFEmode = pd.read_pickle(source_path2.joinpath('DataEmode.npy'))
-
-DFGeba = pd.read_pickle(source_path2.joinpath('DataGeba.npy'))
-DFGebb = pd.read_pickle(source_path2.joinpath('DataGebb.npy'))
-DFGebc = pd.read_pickle(source_path2.joinpath('DataGebc.npy'))
-DFGebd = pd.read_pickle(source_path2.joinpath('DataGebd.npy'))
-DFGebe = pd.read_pickle(source_path2.joinpath('DataGebe.npy'))
-DFGebf = pd.read_pickle(source_path2.joinpath('DataGebf.npy'))
-
-combined_dataframe = pd.concat([DFEmoda, DFEmodb, DFEmodc, DFEmodd, DFEmode,
-                               DFGeba, DFGebb, DFGebc, DFGebd, DFGebe, DFGebf],
-                              ignore_index=True)
-combined_dataframe = combined_dataframe.drop(['$\theta_{wave}$','theta0',
-                                             '$bathy_i$'], axis=1)
-#%%
-source_path2 = Path('C:/Users/hemert/OneDrive - Stichting Deltares/Programmas/Data/Analysis Results')
-
-combined_dataframe = pd.read_pickle(source_path2.joinpath('combined_dataframe.npy'))
-
-
-#%%
-
-
-def load_dataset(path="C:/Users/hemert/OneDrive - Stichting Deltares/Programmas/Data/Analysis Results/DataEmoda.npy"):
-    df = pd.read_pickle(path)
-    return df
-
-
-def create_input_output(df, input_labels, output_labels=None):
-    inputImage = []
-    outputImage = {}
+#%% Functions
+def create_input_images(df, input_label):
+  '''Input a dataframe and an label for the column to convert
+     returns an array containing the reshaped arrays from the chosen column containing arrays'''
+    input_image = []
     for i in df.index:
-        inputImage.append(df[input_labels][i].reshape(256, 256, 1))
-        '''
-    for i in output_labels:
-        outputImage[i] = []
-        for j in df.index:
-            outputImage[i].append(df[i][j].reshape(256, 256, 1))
-        outputImage[i] = np.array(outputImage[i])
-        '''
-    return np.array(inputImage)#, outputImage
+        input_image.append(df[input_labels][i].reshape(256, 256, 1))
+    return np.array(input_image)
 
 def create_output(df, output_label):
-    outputImage = []
+  '''Input a dataframe and an label for the column to convert
+     returns an array containing the reshaped arrays from the chosen column containing arrays'''
+    output_image = []
     for i in df.index:
-        outputImage.append(df[output_label][i].reshape(256, 256, 1))
-    return np.array(outputImage)
+        output_image.append(df[output_label][i].reshape(256, 256, 1))
+    return np.array(output_image)
 
 
-def create_input(df, input_labels):
+def create_input_attributes(df, input_labels):
+  '''Input a dataframe and multiple labels for the columns containing scalars to convert
+     returns a stacked array of the chosen columns'''
     return df[input_labels].values
 
 
@@ -121,9 +87,9 @@ def parse_combined_data(bathy, hs, tm01, theta0x, theta0y, mask,
 
 def write_data(bathy, hs, tm01, theta0x, theta0y, mask,
                eta, zeta, theta_wavex, theta_wavey,
-               filename: str = 'train_data_mask', max_files: int = 100,
-               out_dir=source_path+"train_data_mask/"):
-
+               filename, max_files,
+               out_dir"):
+    '''Writes the data to multiple tfrecord files each containing max_files examples'''
     splits = (len(bathy)//max_files) + 1
     if len(bathy) % max_files == 0:
         splits -= 1
@@ -176,8 +142,9 @@ def write_data(bathy, hs, tm01, theta0x, theta0y, mask,
     return file_count
 
 
-def get_dataset_large(tfr_dir=source_path+'train_data_mask/', 
+def get_dataset_large(tfr_dir=source_path2+'train_data_mask/', 
                       pattern: str = "*train_data_mask.tfrecords"):
+    '''Loads the tfrecord files and returns a tfrecord dataset''' 
     files = glob.glob(tfr_dir+pattern, recursive=False)
 
     dataset = tf.data.TFRecordDataset(files)
@@ -229,6 +196,9 @@ def tf_parse(eg):
     #output = tf.concat([hs, tm01, theta0x, theta0y], axis=-1)
     return (bathy, attr), output
 
+#%% Loading
+combined_dataframe = pd.read_pickle(source_path2.joinpath('combined_dataframe.npy'))
+               
 #%% Computing mean and std of inpu data for standardization
 '''The bathy column gets converted to an array containing the arrays to be able to get one number for the mean'''
 bathy_full_array = np.array(combined_dataframe['bathy'].values.tolist()) 
@@ -306,9 +276,8 @@ tm01_img_train = create_output(train_data, 'tm01')
 theta0x_img_train = create_output(train_data, 'theta0x')
 theta0y_img_train = create_output(train_data, 'theta0y')
 
-#%% Removing nan
+#%% Removing nan and creating a mask for the nan values
 mask_test = np.zeros(tm01_img_train.shape)
-
 mask_test = np.logical_or(mask_test, np.isnan(tm01_img_train))
 
 hs_img_test = np.nan_to_num(hs_img_test, nan=0)
@@ -320,56 +289,21 @@ hs_img_train = np.nan_to_num(hs_img_train, nan=0)
 tm01_img_train = np.nan_to_num(tm01_img_train, nan=0)
 theta0x_img_train = np.nan_to_num(theta0x_img_train, nan=0)
 theta0y_img_train = np.nan_to_num(theta0y_img_train, nan=0)
-#%%
-bathy_img_train = np.load(source_path2.joinpath('bathy_img_train.npy'))
-hs_img_train = np.load(source_path2.joinpath('hs_img_train_mask.npy'))
-tm01_img_train = np.load(source_path2.joinpath('tm01_img_train_mask.npy'))
-theta0x_img_train = np.load(source_path2.joinpath('theta0x_img_train_mask.npy'))
-theta0y_img_train = np.load(source_path2.joinpath('theta0y_img_train_mask.npy'))
 
-mask_train = np.load(source_path2.joinpath('mask_train.npy'))
-
-
-#%%
-'''
-(input_img_test, output_img_test) = create_input_output(test_data, 'bathy',
-                                                        ["hs","tm01","theta0x","theta0y"])
-
-(input_img_train, output_img_train) = create_input_output(train_data, 'bathy',
-                                                        ["hs","tm01","theta0x","theta0y"])
-'''
-
-(inputImages, outputImages) = create_input_output(combined_dataframe, "bathy", ["hs","tm01","theta0x","theta0y"])
-inputAttr = create_input(combined_dataframe, ['$\eta$', '$\zeta$', 'theta_wavex', 'theta_wavey'])
-
-inputImages = (inputImages - np.nanmean(inputImages))/np.nanstd(inputImages)
-(inputImages, outputImages) = (np.nan_to_num(
-    inputImages, nan=-2.), np.nan_to_num(outputImages, nan=-2.))
-for i in outputImages:
-    outputImages[i] = np.nan_to_num(outputImages[i], nan=-2.)
-
-inputAttr[:, 0] = (inputAttr[:, 0] - np.mean(inputAttr[:, 0])
-                   ) / np.std(inputAttr[:, 0])
-inputAttr[:, 1] = (inputAttr[:, 1] - np.mean(inputAttr[:, 1])
-                   ) / np.std(inputAttr[:, 1])
-#inputAttr[:, 2] = inputAttr[:, 2] / (2*np.pi)
-#count = write_images_to_tfr_short(i, o)
-
-#dataset = get_dataset_small(r'C:\Users\hemert\OneDrive - Stichting Deltares\Programmas\Data\images.tfrecords')
-
-#%%
+#%% Writing data to tfrecord files
 write_data(bathy_img_test, hs_img_test, tm01_img_test,
            theta0x_img_test, theta0y_img_test, mask_test,
            input_attr_test[:, 0], input_attr_test[:, 1], input_attr_test[:, 2],
-           input_attr_test[:,3],max_files=100)
+           input_attr_test[:,3],max_files=100,
+           file_name='test_data_mask', out_dir=source_path2+"test_data_mask/")
 
-#%%
 write_data(bathy_img_train, hs_img_train, tm01_img_train,
            theta0x_img_train, theta0y_img_train, mask_train,
            input_attr_train[:, 0], input_attr_train[:, 1], input_attr_train[:, 2],
-           input_attr_train[:,3],max_files=100)
+           input_attr_train[:,3],max_files=100,
+           file_name='train_data_mask', out_dir=source_path2+"train_data_mask/"))
 
-#%%
+#%% Testing
 dataset = get_dataset_large()
 
 for sample in dataset.take(1):
@@ -377,26 +311,4 @@ for sample in dataset.take(1):
     print(sample[0].shape)
     print(sample[1].shape)
     print(sample[2].shape)
-
-train_size = int(0.7*1016)
-val_size = int(0.15*1016)
-test_size = int(0.15*1016)
-
-dataset = dataset.shuffle(buffer_size=30)
-train_dataset = dataset.take(train_size)
-test_dataset = dataset.skip(train_size)
-val_dataset = test_dataset.skip(test_size)
-test_dataset = test_dataset.take(test_size)
-
-shape = []
-for sample in val_dataset.take(val_size):
-    # print(sample[0].shape)
-    # print(sample[1].shape)
-    shape.append(sample[1].shape)
-
-examples = dataset.take(10)
-example_bytes = list(examples)[0].numpy()
-parsed = tf.train.Example.FromString(example_bytes)
-parsed.features.feature('height')
-parsed.features.feature('width')
-list(parsed.features.feature.keys())
+    
