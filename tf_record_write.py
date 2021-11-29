@@ -367,34 +367,4 @@ write_data(bathy_img_train, hs_img_train, tm01_img_train,
            input_attr_train[:, 0], input_attr_train[:, 1], input_attr_train[:, 2],
            input_attr_train[:,3],max_files=100)
 
-#%%
-dataset = get_dataset_large()
 
-for sample in dataset.take(1):
-    print(repr(sample))
-    print(sample[0].shape)
-    print(sample[1].shape)
-    print(sample[2].shape)
-
-train_size = int(0.7*1016)
-val_size = int(0.15*1016)
-test_size = int(0.15*1016)
-
-dataset = dataset.shuffle(buffer_size=30)
-train_dataset = dataset.take(train_size)
-test_dataset = dataset.skip(train_size)
-val_dataset = test_dataset.skip(test_size)
-test_dataset = test_dataset.take(test_size)
-
-shape = []
-for sample in val_dataset.take(val_size):
-    # print(sample[0].shape)
-    # print(sample[1].shape)
-    shape.append(sample[1].shape)
-
-examples = dataset.take(10)
-example_bytes = list(examples)[0].numpy()
-parsed = tf.train.Example.FromString(example_bytes)
-parsed.features.feature('height')
-parsed.features.feature('width')
-list(parsed.features.feature.keys())
